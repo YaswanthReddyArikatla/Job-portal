@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Job Portal - Login & Resume Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to right,#f4f6f9,#eef1f5);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+  }
+  .container {
+    background:#fff;
+    max-width: 500px;
+    width:100%;
+    padding: 30px 25px;
+    border-radius:12px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.08);
+  }
+  h1,h2 {
+    text-align:center;
+    color:#2f80ed;
+    margin-bottom:15px;
+  }
+  p.subtitle {
+    text-align:center;
+    color:#555;
+    margin-bottom:25px;
+  }
+  .hidden {display:none;}
+  .form-group {
+    margin-bottom:15px;
+  }
+  input[type=text], input[type=password], input[type=file] {
+    width:100%;
+    padding:10px;
+    font-size:14px;
+    border:1px solid #ccc;
+    border-radius:6px;
+  }
+  button {
+    width:100%;
+    padding:12px;
+    background:#2f80ed;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    font-weight:600;
+    font-size:16px;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  button:hover {background:#1c64d1;}
+  .toggle {
+    text-align:center;
+    margin-top:12px;
+    color:#555;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .jobs-list {
+    list-style:none;
+    padding:0;
+    margin-top:20px;
+  }
+  .jobs-list li {
+    background:#f0f4ff;
+    padding:15px 20px;
+    border-left:4px solid #2f80ed;
+    margin-bottom:12px;
+    border-radius:6px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:500;
+  }
+  .jobs-list button {
+    width:80px;
+    padding:8px 0;
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div id="login-view">
+    <h1>Job Portal</h1>
+    <p class="subtitle">Login to Scan Your Resume</p>
+    <div class="form-group"><input type="text" id="login-username" placeholder="Username" autocomplete="off" /></div>
+    <div class="form-group"><input type="password" id="login-password" placeholder="Password" autocomplete="off" /></div>
+    <button onclick="login()">Login</button>
+    <p class="toggle" onclick="showSignup()">Don't have an account? Sign Up</p>
+  </div>
+
+  <div id="signup-view" class="hidden">
+    <h1>Job Portal</h1>
+    <p class="subtitle">Create an Account</p>
+    <div class="form-group"><input type="text" id="signup-username" placeholder="Username" autocomplete="off" /></div>
+    <div class="form-group"><input type="password" id="signup-password" placeholder="Password" autocomplete="off" /></div>
+    <button onclick="signup()">Sign Up</button>
+    <p class="toggle" onclick="showLogin()">Already have an account? Login</p>
+  </div>
+
+  <div id="scanner-view" class="hidden">
+    <h2>Upload Your Resume</h2>
+    <input type="file" id="resume-file" accept=".txt,.pdf,.doc,.docx" />
+    <button onclick="scanResume()">Scan Resume & Match Jobs</button>
+
+    <h2>Matched Jobs</h2>
+    <ul id="matched-jobs" class="jobs-list"></ul>
+  </div>
+
+</div>
+
+<script>
+  const users = {};
+  const validCharsRegex = /^[a-zA-Z0-9!@#$%^&*()_\-+=\[\]\\{}|;':",.\/<>?]+$/;
+  const jobs = [
+    { title: "Frontend Developer", keywords: ["javascript","react","html","css"] },
+    { title: "Data Scientist", keywords: ["python","tensorflow","pandas","nlp"] },
+    { title: "Backend Developer", keywords: ["node.js","express","mongodb","api"] }
+  ];
+  const loginView = document.getElementById('login-view');
+  const signupView = document.getElementById('signup-view');
+  const scannerView = document.getElementById('scanner-view');
+
+  function showSignup() {
+    loginView.classList.add('hidden');
+    signupView.classList.remove('hidden');
+  }
+  function showLogin() {
+    signupView.classList.add('hidden');
+    loginView.classList.remove('hidden');
+  }
+  function isValidInput(str) {
+    return validCharsRegex.test(str);
+  }
+  function signup() {
+    const u = document.getElementById('signup-username').value.trim();
+    const p = document.getElementById('signup-password').value;
+    if(!u || !p) {
+      alert('Please enter username and password.');
+      return;
+    }
+    if(!isValidInput(u)) {
+      alert('Username contains invalid characters.');
+      return;
+    }
+    if(!isValidInput(p)) {
+      alert('Password contains invalid characters.');
+      return;
+    }
+    if(users[u]) {
+      alert('Username already exists.');
+      return;
+    }
+    users[u] = p;
+    alert('Account created! Please login.');
+    showLogin();
+  }
+  function login() {
+    const u = document.getElementById('login-username').value.trim();
+    const p = document.getElementById('login-password').value;
+    if(!isValidInput(u) || !isValidInput(p)) {
+      alert('Username or password contains invalid characters.');
+      return;
+    }
+    if(users[u] && users[u] === p) {
+      loginView.classList.add('hidden');
+      signupView.classList.add('hidden');
+      scannerView.classList.remove('hidden');
+    } else {
+      alert('Invalid username or password.');
+    }
+  }
+  function extractSkills(text) {
+    text = text.toLowerCase();
+    const skills = ["javascript","react","node.js","mongodb","css","html","tensorflow","nlp","python","express","api","pandas"];
+    return skills.filter(skill => text.includes(skill));
+  }
+  function scanResume() {
+    const fileInput = document.getElementById('resume-file');
+    const file = fileInput.files[0];
+    const output = document.getElementById('matched-jobs');
+    output.innerHTML = '';
+    if(!file) {
+      alert('Please upload a resume file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result.toLowerCase();
+      const extracted = extractSkills(text);
+      const matched = jobs.filter(job => job.keywords.some(k => extracted.includes(k)));
+      if(matched.length === 0) {
+        output.innerHTML = '<li>No matching jobs found.</li>';
+        return;
+      }
+      matched.forEach(job => {
+        const li = document.createElement('li');
+        li.textContent = job.title;
+        const btn = document.createElement('button');
+        btn.textContent = 'Apply';
+        btn.onclick = () => alert(`You applied for ${job.title}!`);
+        li.appendChild(btn);
+        output.appendChild(li);
+      });
+    };
+    if(file.type === 'text/plain') {
+      reader.readAsText(file);
+    } else {
+      const dummyResume = "Experienced developer with skills in JavaScript, React, Node.js and MongoDB.";
+      extractAndMatch(dummyResume);
+      return;
+    }
+  }
+  function extractAndMatch(text) {
+    const output = document.getElementById('matched-jobs');
+    output.innerHTML = '';
+    const extracted = extractSkills(text.toLowerCase());
+    const matched = jobs.filter(job => job.keywords.some(k => extracted.includes(k)));
+    if(matched.length === 0) {
+      output.innerHTML = '<li>No matching jobs found.</li>';
+      return;
+    }
+    matched.forEach(job => {
+      const li = document.createElement('li');
+      li.textContent = job.title;
+      const btn = document.createElement('button');
+      btn.textContent = 'Apply';
+      btn.onclick = () => alert(`You applied for ${job.title}!`);
+      li.appendChild(btn);
+      output.appendChild(li);
+    });
+  }
+</script>
+
+</body>
+</html>
